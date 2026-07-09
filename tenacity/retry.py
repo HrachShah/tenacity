@@ -177,7 +177,15 @@ class retry_if_exception_cause_type(retry_base):
 
         if retry_state.outcome.failed:
             exc = retry_state.outcome.exception()
-            while exc is not None:
+            # Track the exceptions we have already visited so a cycle in the
+            # ``__cause__`` chain (for example a self-referential ``__cause__``
+            # that is otherwise valid Python) cannot send the retry policy
+            # into an infinite loop. The set is bounded by the length of the
+            # actual chain because each iteration either adds a new exception
+            # or breaks the loop.
+            seen: set[int] = set()
+            while exc is not None and id(exc) not in seen:
+                seen.add(id(exc))
                 if isinstance(exc.__cause__, self.exception_cause_types):
                     return True
                 exc = exc.__cause__

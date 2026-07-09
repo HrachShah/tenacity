@@ -1441,6 +1441,44 @@ class TestDecoratorWrapper(unittest.TestCase):
         except NameError:
             pass
 
+    def test_retry_if_exception_cause_type_handles_cycle(self) -> None:
+        # A circular ``__cause__`` chain must not hang the retry policy.
+        # Build a cycle of three ValueErrors, then raise the head of the
+        # cycle from a function wrapped in ``retry_if_exception_cause_type``.
+        # The previous implementation walked the ``__cause__`` chain with
+        # a plain ``while`` and so looped forever here; the fix keeps a
+        # set of ``id(exc)`` already visited and breaks the loop on the
+        # second visit. The cycle does not contain a NameError, so the
+        # function should also return ``False`` (do not retry) and not
+        # raise or hang.
+        a = ValueError("a")
+        b = ValueError("b")
+        c = ValueError("c")
+        a.__cause__ = b
+        b.__cause__ = c
+        c.__cause__ = a
+
+        state = RetryCallState(
+            retry_object=Retrying(
+                retry=tenacity.retry_if_exception_cause_type(NameError),
+                stop=tenacity.stop_after_attempt(3),
+                wait=tenacity.wait_fixed(0),
+            ),
+            fn=lambda: None,
+            args=(),
+            kwargs={},
+        )
+        try:
+            raise a
+        except ValueError as exc:
+            state.set_exception((type(exc), exc, exc.__traceback__))
+
+        # Should return without hanging. No NameError in the chain, so
+        # the retry policy should not fire.
+        self.assertFalse(
+            tenacity.retry_if_exception_cause_type(NameError)(state)
+        )
+
     def test_retry_preserves_argument_defaults(self) -> None:
         def function_with_defaults(a: int = 1) -> int:
             return a
