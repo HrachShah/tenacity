@@ -280,6 +280,12 @@ class retry_any(retry_base):
     """Retries if any of the retries condition is valid."""
 
     def __init__(self, *retries: "RetryBaseT") -> None:
+        if not retries:
+            raise TypeError(
+                f"{self.__class__.__name__}() requires at least one retry predicate;"
+                " got none. An empty retry_any would never match and silently disable"
+                " the retry policy."
+            )
         self.retries = retries
 
     def __call__(self, retry_state: "RetryCallState") -> bool:
@@ -295,6 +301,12 @@ class retry_all(retry_base):
     """Retries if all the retries condition are valid."""
 
     def __init__(self, *retries: "RetryBaseT") -> None:
+        if not retries:
+            raise TypeError(
+                f"{self.__class__.__name__}() requires at least one retry predicate;"
+                " got none. An empty retry_all would vacuously return True from"
+                " all(()) and retry forever."
+            )
         self.retries = retries
 
     def __call__(self, retry_state: "RetryCallState") -> bool:

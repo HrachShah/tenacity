@@ -840,7 +840,32 @@ class TestRetryConditions(unittest.TestCase):
         self.assertIsInstance(combined, retry_all)
         self.assertEqual(len(combined.retries), 3)
 
+    def test_retry_all_empty_raises_type_error(self) -> None:
+        """An empty retry_all would vacuously return True from all(()) and
+        retry forever, so constructing one without any predicates must be
+        rejected with a clear TypeError rather than silently misbehaving at
+        call time."""
+        with self.assertRaises(TypeError) as ctx:
+            retry_all()
+        self.assertIn("retry_all", str(ctx.exception))
+        self.assertIn("at least one", str(ctx.exception))
+
+    def test_retry_any_empty_raises_type_error(self) -> None:
+        """An empty retry_any would never match and silently disable the
+        retry policy, so constructing one without any predicates must be
+        rejected with a clear TypeError."""
+        with self.assertRaises(TypeError) as ctx:
+            retry_any()
+        self.assertIn("retry_any", str(ctx.exception))
+        self.assertIn("at least one", str(ctx.exception))
+
+    def test_retry_all_single_predicate_still_works(self) -> None:
+        """The empty-arg guard must not break the normal single-predicate case."""
+        r = retry_all(tenacity.retry_if_result(lambda x: x == 1))
+        self.assertEqual(len(r.retries), 1)
+
     def _raise_try_again(self) -> None:
+
         self._attempts += 1
         if self._attempts < 3:
             raise tenacity.TryAgain
