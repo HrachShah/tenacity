@@ -45,6 +45,12 @@ class stop_any(stop_base):
     """Stop if any of the stop condition is valid."""
 
     def __init__(self, *stops: stop_base) -> None:
+        if not stops:
+            raise TypeError(
+                f"{self.__class__.__name__}() requires at least one stop predicate;"
+                " got none. An empty stop_any would never match and silently disable"
+                " the stop policy."
+            )
         self.stops = stops
 
     def __call__(self, retry_state: "RetryCallState") -> bool:
@@ -55,6 +61,12 @@ class stop_all(stop_base):
     """Stop if all the stop conditions are valid."""
 
     def __init__(self, *stops: stop_base) -> None:
+        if not stops:
+            raise TypeError(
+                f"{self.__class__.__name__}() requires at least one stop predicate;"
+                " got none. An empty stop_all would vacuously return True from"
+                " all(()) and stop the retry on the very first call."
+            )
         self.stops = stops
 
     def __call__(self, retry_state: "RetryCallState") -> bool:
