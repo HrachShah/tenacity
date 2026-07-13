@@ -280,6 +280,32 @@ class TestStopConditions(unittest.TestCase):
         self.assertFalse(r.stop(make_retry_state(100, 99)))
         self.assertTrue(r.stop(make_retry_state(101, 101)))
 
+    def test_stop_any_empty_raises_type_error(self) -> None:
+        """An empty stop_any would never match (any(()) is False) and silently
+        disable the stop policy, so constructing one without any predicates
+        must be rejected with a clear TypeError rather than misbehaving at
+        call time.
+        """
+        with self.assertRaises(TypeError) as ctx:
+            tenacity.stop_any()
+        self.assertIn("stop_any", str(ctx.exception))
+        self.assertIn("at least one", str(ctx.exception))
+
+    def test_stop_all_empty_raises_type_error(self) -> None:
+        """An empty stop_all would vacuously return True from all(()) and
+        stop the retry on the very first call, so constructing one without
+        any predicates must be rejected with a clear TypeError.
+        """
+        with self.assertRaises(TypeError) as ctx:
+            tenacity.stop_all()
+        self.assertIn("stop_all", str(ctx.exception))
+        self.assertIn("at least one", str(ctx.exception))
+
+    def test_stop_all_single_predicate_still_works(self) -> None:
+        """The empty-arg guard must not break the normal single-predicate case."""
+        s = tenacity.stop_all(tenacity.stop_after_attempt(3))
+        self.assertEqual(len(s.stops), 1)
+
 
 class TestWaitConditions(unittest.TestCase):
     def test_no_sleep(self) -> None:

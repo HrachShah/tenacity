@@ -1,0 +1,9 @@
+fixes:
+  - |
+    ``stop_any`` and ``stop_all`` now reject being constructed without any
+    stop predicates, raising a clear ``TypeError`` instead of silently
+    misbehaving at call time. An empty ``stop_any`` would never match
+    (``any(())`` is ``False``) and silently disable the stop policy; an
+    empty ``stop_all`` would vacuously return ``True`` from ``all(())`` and
+    stop the retry on the very first call. Mirrors the guard previously
+    added to ``retry_any`` and ``retry_all``.
