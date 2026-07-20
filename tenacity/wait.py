@@ -71,6 +71,8 @@ class wait_random(wait_base):
     ) -> None:
         self.wait_random_min = _utils.to_seconds(min)
         self.wait_random_max = _utils.to_seconds(max)
+        if self.wait_random_max < self.wait_random_min:
+            raise ValueError("max wait must be greater than or equal to min wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         return self.wait_random_min + (
