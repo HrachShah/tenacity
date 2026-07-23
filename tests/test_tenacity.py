@@ -403,6 +403,12 @@ class TestWaitConditions(unittest.TestCase):
         self.assertEqual(r.wait(make_retry_state(8, 0)), 256)
         self.assertEqual(r.wait(make_retry_state(20, 0)), 1048576)
 
+    def test_exponential_rejects_reversed_bounds(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError, "max wait must be greater than or equal to min wait"
+        ):
+            tenacity.wait_exponential(max=1, min=2)
+
     def test_exponential_with_min_wait_andmax__wait(self) -> None:
         for min_, max_ in (
             (10, 100),
