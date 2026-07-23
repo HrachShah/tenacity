@@ -403,6 +403,12 @@ class TestWaitConditions(unittest.TestCase):
         self.assertEqual(r.wait(make_retry_state(8, 0)), 256)
         self.assertEqual(r.wait(make_retry_state(20, 0)), 1048576)
 
+    def test_exponential_rejects_reversed_bounds(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError, "max wait must be greater than or equal to min wait"
+        ):
+            tenacity.wait_exponential(max=1, min=2)
+
     def test_exponential_with_min_wait_andmax__wait(self) -> None:
         for min_, max_ in (
             (10, 100),
@@ -668,6 +674,9 @@ class TestWaitConditions(unittest.TestCase):
     def test_wait_exponential_jitter_initial_and_multiplier_raises(self) -> None:
         with self.assertRaises(ValueError):
             tenacity.wait_exponential_jitter(initial=5, multiplier=10)
+    def test_wait_exponential_jitter_rejects_reversed_bounds(self) -> None:
+        with self.assertRaisesRegex(ValueError, "max wait must be greater than or equal to min wait"):
+            tenacity.wait_exponential_jitter(max=1, min=2)
 
     def test_wait_retry_state_attributes(self) -> None:
         class ExtractCallState(Exception):

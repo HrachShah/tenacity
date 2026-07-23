@@ -71,6 +71,8 @@ class wait_random(wait_base):
     ) -> None:
         self.wait_random_min = _utils.to_seconds(min)
         self.wait_random_max = _utils.to_seconds(max)
+        if self.wait_random_max < self.wait_random_min:
+            raise ValueError("max wait must be greater than or equal to min wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         return self.wait_random_min + (
@@ -199,6 +201,8 @@ class wait_exponential(wait_base):
         self.multiplier = multiplier
         self.min = _utils.to_seconds(min)
         self.max = _utils.to_seconds(max)
+        if self.max < self.min:
+            raise ValueError("max wait must be greater than or equal to min wait")
         self.exp_base = exp_base
 
     def __call__(self, retry_state: "RetryCallState") -> float:
@@ -289,6 +293,8 @@ class wait_exponential_jitter(wait_base):
         self.exp_base = exp_base
         self.jitter = _utils.to_seconds(jitter)
         self.min = _utils.to_seconds(min)
+        if self.max < self.min:
+            raise ValueError("max wait must be greater than or equal to min wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         jitter = random.uniform(0, self.jitter)
