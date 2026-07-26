@@ -203,7 +203,11 @@ class wait_exponential(wait_base):
         self.max = _utils.to_seconds(max)
         if self.max < self.min:
             raise ValueError("max wait must be greater than or equal to min wait")
+        if self.multiplier < 0:
+            raise ValueError("multiplier must be greater than or equal to zero")
         self.exp_base = exp_base
+        if self.exp_base <= 0:
+            raise ValueError("exp_base must be greater than zero")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         exponent = retry_state.attempt_number - 1
