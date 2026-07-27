@@ -201,13 +201,19 @@ class wait_exponential(wait_base):
         self.multiplier = multiplier
         self.min = _utils.to_seconds(min)
         self.max = _utils.to_seconds(max)
+        if not math.isfinite(self.min) or not math.isfinite(self.max):
+            raise ValueError("wait bounds must be finite")
         if self.max < self.min:
             raise ValueError("max wait must be greater than or equal to min wait")
         if self.multiplier < 0:
             raise ValueError("multiplier must be greater than or equal to zero")
+        if not math.isfinite(self.multiplier):
+            raise ValueError("multiplier must be finite")
         self.exp_base = exp_base
         if self.exp_base <= 0:
             raise ValueError("exp_base must be greater than zero")
+        if not math.isfinite(self.exp_base):
+            raise ValueError("exp_base must be finite")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         exponent = retry_state.attempt_number - 1
@@ -297,6 +303,11 @@ class wait_exponential_jitter(wait_base):
         self.exp_base = exp_base
         self.jitter = _utils.to_seconds(jitter)
         self.min = _utils.to_seconds(min)
+        if not all(
+            math.isfinite(value)
+            for value in (self.max, self.exp_base, self.jitter, self.min, multiplier)
+        ):
+            raise ValueError("wait parameters must be finite")
         if self.max < self.min:
             raise ValueError("max wait must be greater than or equal to min wait")
 
