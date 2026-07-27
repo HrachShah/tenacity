@@ -308,6 +308,12 @@ class wait_exponential_jitter(wait_base):
             for value in (self.max, self.exp_base, self.jitter, self.min, multiplier)
         ):
             raise ValueError("wait parameters must be finite")
+        if self.multiplier < 0:
+            raise ValueError("multiplier must be greater than or equal to zero")
+        if self.exp_base <= 0:
+            raise ValueError("exp_base must be greater than zero")
+        if self.jitter < 0:
+            raise ValueError("jitter must be greater than or equal to zero")
         if self.max < self.min:
             raise ValueError("max wait must be greater than or equal to min wait")
 

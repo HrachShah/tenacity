@@ -710,6 +710,16 @@ class TestWaitConditions(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "finite"):
                     tenacity.wait_exponential_jitter(**kwargs)
 
+    def test_wait_exponential_jitter_rejects_negative_parameters(self) -> None:
+        for kwargs, message in (
+            ({"multiplier": -1}, "multiplier"),
+            ({"exp_base": -1}, "exp_base"),
+            ({"jitter": -1}, "jitter"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_exponential_jitter(**kwargs)
+
     def test_wait_retry_state_attributes(self) -> None:
         class ExtractCallState(Exception):
             pass
