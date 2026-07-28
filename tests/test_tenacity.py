@@ -322,6 +322,17 @@ class TestWaitConditions(unittest.TestCase):
                     self.assertTrue(t >= 1)
                     self.assertTrue(t < 20)
 
+    def test_random_sleep_rejects_invalid_bounds(self) -> None:
+        for kwargs, message in (
+            ({"min": float("nan")}, "finite"),
+            ({"max": float("inf")}, "finite"),
+            ({"min": -1}, "greater than or equal to zero"),
+            ({"max": -1}, "greater than or equal to zero"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_random(**kwargs)
+
     def test_random_sleep_withoutmin_(self) -> None:
         r = Retrying(wait=tenacity.wait_random(max=2))
         times = set()

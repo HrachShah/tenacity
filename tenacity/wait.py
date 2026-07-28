@@ -71,6 +71,10 @@ class wait_random(wait_base):
     ) -> None:
         self.wait_random_min = _utils.to_seconds(min)
         self.wait_random_max = _utils.to_seconds(max)
+        if not math.isfinite(self.wait_random_min) or not math.isfinite(self.wait_random_max):
+            raise ValueError("wait bounds must be finite")
+        if self.wait_random_min < 0 or self.wait_random_max < 0:
+            raise ValueError("wait bounds must be greater than or equal to zero")
         if self.wait_random_max < self.wait_random_min:
             raise ValueError("max wait must be greater than or equal to min wait")
 
