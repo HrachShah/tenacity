@@ -313,6 +313,7 @@ class TestWaitConditions(unittest.TestCase):
             ({"start": -1}, "greater than or equal to zero"),
             ({"increment": -1}, "greater than or equal to zero"),
             ({"max": -1}, "greater than or equal to zero"),
+            ({"start": 2, "max": 1}, "greater than or equal to start wait"),
         ):
             with self.subTest(kwargs=kwargs):
                 with self.assertRaisesRegex(ValueError, message):

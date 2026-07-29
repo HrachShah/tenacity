@@ -180,6 +180,8 @@ class wait_incrementing(wait_base):
             raise ValueError("wait parameters must be finite")
         if self.start < 0 or self.increment < 0 or self.max < 0:
             raise ValueError("wait parameters must be greater than or equal to zero")
+        if self.max < self.start:
+            raise ValueError("max wait must be greater than or equal to start wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         result = self.start + (self.increment * (retry_state.attempt_number - 1))
