@@ -471,6 +471,12 @@ class TestWaitConditions(unittest.TestCase):
                 self.assertEqual(r.wait(make_retry_state(9, 0)), 100)
                 self.assertEqual(r.wait(make_retry_state(20, 0)), 100)
 
+    def test_exponential_jitter_rejects_negative_parameters(self) -> None:
+        for kwargs in ({"min": -1}, {"max": -1}):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaises(ValueError):
+                    tenacity.wait_exponential_jitter(**kwargs)
+
     def test_legacy_explicit_wait_type(self) -> None:
         Retrying(wait="exponential_sleep")  # type: ignore[arg-type]
 
