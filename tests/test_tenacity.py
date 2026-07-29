@@ -305,6 +305,19 @@ class TestWaitConditions(unittest.TestCase):
                 self.assertEqual(600, r.wait(make_retry_state(2, 6546)))
                 self.assertEqual(700, r.wait(make_retry_state(3, 6546)))
 
+    def test_incrementing_sleep_rejects_invalid_parameters(self) -> None:
+        for kwargs, message in (
+            ({"start": float("nan")}, "finite"),
+            ({"increment": float("inf")}, "finite"),
+            ({"max": float("-inf")}, "finite"),
+            ({"start": -1}, "greater than or equal to zero"),
+            ({"increment": -1}, "greater than or equal to zero"),
+            ({"max": -1}, "greater than or equal to zero"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_incrementing(**kwargs)
+
     def test_random_sleep(self) -> None:
         for min_, max_ in (
             (1, 20),
