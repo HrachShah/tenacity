@@ -51,6 +51,10 @@ class wait_fixed(wait_base):
 
     def __init__(self, wait: _utils.time_unit_type) -> None:
         self.wait_fixed = _utils.to_seconds(wait)
+        if not math.isfinite(self.wait_fixed):
+            raise ValueError("wait must be finite")
+        if self.wait_fixed < 0:
+            raise ValueError("wait must be greater than or equal to zero")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         return self.wait_fixed

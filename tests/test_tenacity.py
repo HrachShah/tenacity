@@ -481,6 +481,16 @@ class TestWaitConditions(unittest.TestCase):
     def test_legacy_explicit_wait_type(self) -> None:
         Retrying(wait="exponential_sleep")  # type: ignore[arg-type]
 
+    def test_wait_fixed_rejects_invalid_values(self) -> None:
+        for value, message in (
+            (-1, "wait must be greater than or equal to zero"),
+            (float("nan"), "wait must be finite"),
+            (float("inf"), "wait must be finite"),
+        ):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_fixed(value)
+
     def test_wait_func(self) -> None:
         def wait_func(retry_state: RetryCallState) -> typing.Any:
             return retry_state.attempt_number * retry_state.seconds_since_start  # type: ignore[operator]
