@@ -454,6 +454,10 @@ class TestWaitConditions(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exp_base must be greater than zero"):
             tenacity.wait_exponential(exp_base=0)
 
+    def test_exponential_rejects_unit_exponent_base(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exp_base must not equal one"):
+            tenacity.wait_exponential(exp_base=1)
+
     def test_exponential_with_min_wait_andmax__wait(self) -> None:
         for min_, max_ in (
             (10, 100),

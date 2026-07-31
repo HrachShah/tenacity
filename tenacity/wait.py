@@ -226,6 +226,8 @@ class wait_exponential(wait_base):
         self.exp_base = exp_base
         if self.exp_base <= 0:
             raise ValueError("exp_base must be greater than zero")
+        if self.exp_base == 1:
+            raise ValueError("exp_base must not equal one")
         if not math.isfinite(self.exp_base):
             raise ValueError("exp_base must be finite")
 
