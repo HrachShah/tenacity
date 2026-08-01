@@ -15,7 +15,6 @@
 # limitations under the License.
 import abc
 import math
-import math
 import typing
 
 from tenacity import _utils
@@ -109,6 +108,10 @@ class stop_after_delay(stop_base):
             raise ValueError("max_delay must be finite")
         if self.max_delay < 0:
             raise ValueError("max_delay must be greater than or equal to zero")
+        if not math.isfinite(self.max_delay):
+            raise ValueError("max_delay must be finite")
+        if self.max_delay < 0:
+            raise ValueError("max_delay must be greater than or equal to zero")
 
     def __call__(self, retry_state: "RetryCallState") -> bool:
         if retry_state.seconds_since_start is None:
@@ -126,6 +129,10 @@ class stop_before_delay(stop_base):
 
     def __init__(self, max_delay: _utils.time_unit_type) -> None:
         self.max_delay = _utils.to_seconds(max_delay)
+        if not math.isfinite(self.max_delay):
+            raise ValueError("max_delay must be finite")
+        if self.max_delay < 0:
+            raise ValueError("max_delay must be greater than or equal to zero")
         if not math.isfinite(self.max_delay):
             raise ValueError("max_delay must be finite")
         if self.max_delay < 0:
