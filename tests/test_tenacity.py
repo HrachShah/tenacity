@@ -763,6 +763,10 @@ class TestWaitConditions(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "max wait must be greater than or equal to min wait"):
             tenacity.wait_exponential_jitter(max=1, min=2)
 
+    def test_wait_exponential_jitter_rejects_boolean_exponent_base(self) -> None:
+        with self.assertRaisesRegex(TypeError, "exp_base must be a real number"):
+            tenacity.wait_exponential_jitter(exp_base=True)
+
     def test_wait_exponential_jitter_rejects_non_finite_parameters(self) -> None:
         for kwargs in (
             {"max": float("nan")},
