@@ -86,6 +86,10 @@ class stop_after_attempt(stop_base):
     """Stop when the previous attempt >= max_attempt."""
 
     def __init__(self, max_attempt_number: int) -> None:
+        if isinstance(max_attempt_number, bool) or not isinstance(max_attempt_number, int):
+            raise TypeError("max_attempt_number must be an integer")
+        if max_attempt_number < 1:
+            raise ValueError("max_attempt_number must be greater than zero")
         self.max_attempt_number = max_attempt_number
 
     def __call__(self, retry_state: "RetryCallState") -> bool:
