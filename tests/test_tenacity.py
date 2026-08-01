@@ -266,6 +266,13 @@ class TestStopConditions(unittest.TestCase):
                     with self.assertRaises(ValueError):
                         stop_class(delay)
 
+    def test_stop_delay_rejects_invalid_limits(self) -> None:
+        for stop_type in (tenacity.stop_after_delay, tenacity.stop_before_delay):
+            for value in (-1, float("nan"), float("inf"), float("-inf")):
+                with self.subTest(stop_type=stop_type.__name__, value=value):
+                    with self.assertRaises(ValueError):
+                        stop_type(value)
+
     def test_stop_before_delay(self) -> None:
         for delay in (1, datetime.timedelta(seconds=1)):
             with self.subTest():
