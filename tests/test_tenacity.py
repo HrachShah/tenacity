@@ -252,6 +252,13 @@ class TestStopConditions(unittest.TestCase):
                 self.assertTrue(r.stop(make_retry_state(2, 1)))
                 self.assertTrue(r.stop(make_retry_state(2, 1.001)))
 
+    def test_stop_delay_rejects_invalid_values(self) -> None:
+        for stop_class in (tenacity.stop_after_delay, tenacity.stop_before_delay):
+            for delay in (float("nan"), float("inf"), float("-inf"), -1):
+                with self.subTest(stop_class=stop_class, delay=delay):
+                    with self.assertRaises(ValueError):
+                        stop_class(delay)
+
     def test_stop_before_delay(self) -> None:
         for delay in (1, datetime.timedelta(seconds=1)):
             with self.subTest():
