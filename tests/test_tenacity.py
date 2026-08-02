@@ -518,6 +518,15 @@ class TestWaitConditions(unittest.TestCase):
                 with self.assertRaisesRegex(TypeError, "time values"):
                     constructor(True)
 
+    def test_wait_exponential_rejects_boolean_numeric_parameters(self) -> None:
+        for kwargs, message in (
+            ({"multiplier": True}, "multiplier must be a real number"),
+            ({"exp_base": False}, "exp_base must be a real number"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(TypeError, message):
+                    tenacity.wait_exponential(**kwargs)
+
     def test_wait_fixed_rejects_invalid_values(self) -> None:
         for value, message in (
             (-1, "wait must be greater than or equal to zero"),

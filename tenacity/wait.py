@@ -212,6 +212,8 @@ class wait_exponential(wait_base):
         exp_base: float = 2,
         min: _utils.time_unit_type = 0,
     ) -> None:
+        if isinstance(multiplier, bool):
+            raise TypeError("multiplier must be a real number")
         self.multiplier = multiplier
         self.min = _utils.to_seconds(min)
         self.max = _utils.to_seconds(max)
@@ -223,6 +225,8 @@ class wait_exponential(wait_base):
             raise ValueError("multiplier must be greater than or equal to zero")
         if not math.isfinite(self.multiplier):
             raise ValueError("multiplier must be finite")
+        if isinstance(exp_base, bool):
+            raise TypeError("exp_base must be a real number")
         self.exp_base = exp_base
         if self.exp_base <= 0:
             raise ValueError("exp_base must be greater than zero")
