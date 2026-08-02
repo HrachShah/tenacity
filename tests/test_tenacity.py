@@ -505,6 +505,19 @@ class TestWaitConditions(unittest.TestCase):
     def test_legacy_explicit_wait_type(self) -> None:
         Retrying(wait="exponential_sleep")  # type: ignore[arg-type]
 
+    def test_wait_strategies_reject_boolean_time_values(self) -> None:
+        constructors = (
+            lambda value: tenacity.wait_fixed(value),
+            lambda value: tenacity.wait_random(min=value),
+            lambda value: tenacity.wait_incrementing(start=value),
+            lambda value: tenacity.wait_exponential(min=value),
+            lambda value: tenacity.wait_exponential_jitter(min=value),
+        )
+        for constructor in constructors:
+            with self.subTest(constructor=constructor):
+                with self.assertRaisesRegex(TypeError, "time values"):
+                    constructor(True)
+
     def test_wait_fixed_rejects_invalid_values(self) -> None:
         for value, message in (
             (-1, "wait must be greater than or equal to zero"),
