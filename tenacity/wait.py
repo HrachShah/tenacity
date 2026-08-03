@@ -51,6 +51,10 @@ class wait_fixed(wait_base):
 
     def __init__(self, wait: _utils.time_unit_type) -> None:
         self.wait_fixed = _utils.to_seconds(wait)
+        if not math.isfinite(self.wait_fixed):
+            raise ValueError("wait must be finite")
+        if self.wait_fixed < 0:
+            raise ValueError("wait must be greater than or equal to zero")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         return self.wait_fixed
@@ -71,6 +75,12 @@ class wait_random(wait_base):
     ) -> None:
         self.wait_random_min = _utils.to_seconds(min)
         self.wait_random_max = _utils.to_seconds(max)
+        if not math.isfinite(self.wait_random_min) or not math.isfinite(self.wait_random_max):
+            raise ValueError("wait bounds must be finite")
+        if self.wait_random_min < 0 or self.wait_random_max < 0:
+            raise ValueError("wait bounds must be greater than or equal to zero")
+        if self.wait_random_max < self.wait_random_min:
+            raise ValueError("max wait must be greater than or equal to min wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         return self.wait_random_min + (
@@ -170,6 +180,12 @@ class wait_incrementing(wait_base):
         self.start = _utils.to_seconds(start)
         self.increment = _utils.to_seconds(increment)
         self.max = _utils.to_seconds(max)
+        if not all(math.isfinite(value) for value in (self.start, self.increment, self.max)):
+            raise ValueError("wait parameters must be finite")
+        if self.start < 0 or self.increment < 0 or self.max < 0:
+            raise ValueError("wait parameters must be greater than or equal to zero")
+        if self.max < self.start:
+            raise ValueError("max wait must be greater than or equal to start wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         result = self.start + (self.increment * (retry_state.attempt_number - 1))
@@ -196,10 +212,28 @@ class wait_exponential(wait_base):
         exp_base: float = 2,
         min: _utils.time_unit_type = 0,
     ) -> None:
+        if isinstance(multiplier, bool):
+            raise TypeError("multiplier must be a real number")
         self.multiplier = multiplier
         self.min = _utils.to_seconds(min)
         self.max = _utils.to_seconds(max)
+        if not math.isfinite(self.min) or not math.isfinite(self.max):
+            raise ValueError("wait bounds must be finite")
+        if self.max < self.min:
+            raise ValueError("max wait must be greater than or equal to min wait")
+        if self.multiplier < 0:
+            raise ValueError("multiplier must be greater than or equal to zero")
+        if not math.isfinite(self.multiplier):
+            raise ValueError("multiplier must be finite")
+        if isinstance(exp_base, bool):
+            raise TypeError("exp_base must be a real number")
         self.exp_base = exp_base
+        if self.exp_base <= 0:
+            raise ValueError("exp_base must be greater than zero")
+        if self.exp_base == 1:
+            raise ValueError("exp_base must not equal one")
+        if not math.isfinite(self.exp_base):
+            raise ValueError("exp_base must be finite")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         exponent = retry_state.attempt_number - 1
@@ -289,6 +323,25 @@ class wait_exponential_jitter(wait_base):
         self.exp_base = exp_base
         self.jitter = _utils.to_seconds(jitter)
         self.min = _utils.to_seconds(min)
+        if isinstance(self.exp_base, bool):
+            raise TypeError("exp_base must be a real number")
+        if not all(
+            math.isfinite(value)
+            for value in (self.max, self.exp_base, self.jitter, self.min, multiplier)
+        ):
+            raise ValueError("wait parameters must be finite")
+        if self.multiplier < 0:
+            raise ValueError("multiplier must be greater than or equal to zero")
+        if self.exp_base <= 0:
+            raise ValueError("exp_base must be greater than zero")
+        if self.jitter < 0:
+            raise ValueError("jitter must be greater than or equal to zero")
+        if self.min < 0:
+            raise ValueError("min wait must be greater than or equal to zero")
+        if self.max < 0:
+            raise ValueError("max wait must be greater than or equal to zero")
+        if self.max < self.min:
+            raise ValueError("max wait must be greater than or equal to min wait")
 
     def __call__(self, retry_state: "RetryCallState") -> float:
         jitter = random.uniform(0, self.jitter)

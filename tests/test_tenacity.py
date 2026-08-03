@@ -244,6 +244,19 @@ class TestStopConditions(unittest.TestCase):
         self.assertTrue(r.stop(make_retry_state(3, 6546)))
         self.assertTrue(r.stop(make_retry_state(4, 6546)))
 
+    def test_stop_after_attempt_rejects_invalid_limits(self) -> None:
+        for value in (0, -1, True, 1.5):
+            with self.subTest(value=value):
+                with self.assertRaises((TypeError, ValueError)):
+                    tenacity.stop_after_attempt(value)
+
+    def test_stop_delay_rejects_invalid_values(self) -> None:
+        for stop in (tenacity.stop_after_delay, tenacity.stop_before_delay):
+            for delay in (-1, float("nan"), float("inf"), float("-inf")):
+                with self.subTest(stop=stop.__name__, delay=delay):
+                    with self.assertRaises(ValueError):
+                        stop(delay)
+
     def test_stop_after_delay(self) -> None:
         for delay in (1, datetime.timedelta(seconds=1)):
             with self.subTest():
@@ -251,6 +264,13 @@ class TestStopConditions(unittest.TestCase):
                 self.assertFalse(r.stop(make_retry_state(2, 0.999)))
                 self.assertTrue(r.stop(make_retry_state(2, 1)))
                 self.assertTrue(r.stop(make_retry_state(2, 1.001)))
+
+    def test_stop_delay_rejects_invalid_limits(self) -> None:
+        for stop_type in (tenacity.stop_after_delay, tenacity.stop_before_delay):
+            for value in (-1, float("nan"), float("inf"), float("-inf")):
+                with self.subTest(stop_type=stop_type.__name__, value=value):
+                    with self.assertRaises(ValueError):
+                        stop_type(value)
 
     def test_stop_before_delay(self) -> None:
         for delay in (1, datetime.timedelta(seconds=1)):
@@ -305,6 +325,20 @@ class TestWaitConditions(unittest.TestCase):
                 self.assertEqual(600, r.wait(make_retry_state(2, 6546)))
                 self.assertEqual(700, r.wait(make_retry_state(3, 6546)))
 
+    def test_incrementing_sleep_rejects_invalid_parameters(self) -> None:
+        for kwargs, message in (
+            ({"start": float("nan")}, "finite"),
+            ({"increment": float("inf")}, "finite"),
+            ({"max": float("-inf")}, "finite"),
+            ({"start": -1}, "greater than or equal to zero"),
+            ({"increment": -1}, "greater than or equal to zero"),
+            ({"max": -1}, "greater than or equal to zero"),
+            ({"start": 2, "max": 1}, "greater than or equal to start wait"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_incrementing(**kwargs)
+
     def test_random_sleep(self) -> None:
         for min_, max_ in (
             (1, 20),
@@ -321,6 +355,17 @@ class TestWaitConditions(unittest.TestCase):
                 for t in times:
                     self.assertTrue(t >= 1)
                     self.assertTrue(t < 20)
+
+    def test_random_sleep_rejects_invalid_bounds(self) -> None:
+        for kwargs, message in (
+            ({"min": float("nan")}, "finite"),
+            ({"max": float("inf")}, "finite"),
+            ({"min": -1}, "greater than or equal to zero"),
+            ({"max": -1}, "greater than or equal to zero"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_random(**kwargs)
 
     def test_random_sleep_withoutmin_(self) -> None:
         r = Retrying(wait=tenacity.wait_random(max=2))
@@ -403,6 +448,36 @@ class TestWaitConditions(unittest.TestCase):
         self.assertEqual(r.wait(make_retry_state(8, 0)), 256)
         self.assertEqual(r.wait(make_retry_state(20, 0)), 1048576)
 
+    def test_exponential_rejects_reversed_bounds(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError, "max wait must be greater than or equal to min wait"
+        ):
+            tenacity.wait_exponential(max=1, min=2)
+
+    def test_exponential_rejects_negative_multiplier(self) -> None:
+        with self.assertRaisesRegex(ValueError, "multiplier must be greater than or equal to zero"):
+            tenacity.wait_exponential(multiplier=-1)
+
+    def test_exponential_rejects_non_finite_parameters(self) -> None:
+        for kwargs in (
+            {"multiplier": float("nan")},
+            {"multiplier": float("inf")},
+            {"min": float("nan")},
+            {"max": float("inf")},
+            {"exp_base": float("nan")},
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    tenacity.wait_exponential(**kwargs)
+
+    def test_exponential_rejects_non_positive_exponent_base(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exp_base must be greater than zero"):
+            tenacity.wait_exponential(exp_base=0)
+
+    def test_exponential_rejects_unit_exponent_base(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exp_base must not equal one"):
+            tenacity.wait_exponential(exp_base=1)
+
     def test_exponential_with_min_wait_andmax__wait(self) -> None:
         for min_, max_ in (
             (10, 100),
@@ -421,8 +496,46 @@ class TestWaitConditions(unittest.TestCase):
                 self.assertEqual(r.wait(make_retry_state(9, 0)), 100)
                 self.assertEqual(r.wait(make_retry_state(20, 0)), 100)
 
+    def test_exponential_jitter_rejects_negative_parameters(self) -> None:
+        for kwargs in ({"min": -1}, {"max": -1}):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaises(ValueError):
+                    tenacity.wait_exponential_jitter(**kwargs)
+
     def test_legacy_explicit_wait_type(self) -> None:
         Retrying(wait="exponential_sleep")  # type: ignore[arg-type]
+
+    def test_wait_strategies_reject_boolean_time_values(self) -> None:
+        constructors = (
+            lambda value: tenacity.wait_fixed(value),
+            lambda value: tenacity.wait_random(min=value),
+            lambda value: tenacity.wait_incrementing(start=value),
+            lambda value: tenacity.wait_exponential(min=value),
+            lambda value: tenacity.wait_exponential_jitter(min=value),
+        )
+        for constructor in constructors:
+            with self.subTest(constructor=constructor):
+                with self.assertRaisesRegex(TypeError, "time values"):
+                    constructor(True)
+
+    def test_wait_exponential_rejects_boolean_numeric_parameters(self) -> None:
+        for kwargs, message in (
+            ({"multiplier": True}, "multiplier must be a real number"),
+            ({"exp_base": False}, "exp_base must be a real number"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(TypeError, message):
+                    tenacity.wait_exponential(**kwargs)
+
+    def test_wait_fixed_rejects_invalid_values(self) -> None:
+        for value, message in (
+            (-1, "wait must be greater than or equal to zero"),
+            (float("nan"), "wait must be finite"),
+            (float("inf"), "wait must be finite"),
+        ):
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_fixed(value)
 
     def test_wait_func(self) -> None:
         def wait_func(retry_state: RetryCallState) -> typing.Any:
@@ -668,6 +781,35 @@ class TestWaitConditions(unittest.TestCase):
     def test_wait_exponential_jitter_initial_and_multiplier_raises(self) -> None:
         with self.assertRaises(ValueError):
             tenacity.wait_exponential_jitter(initial=5, multiplier=10)
+    def test_wait_exponential_jitter_rejects_reversed_bounds(self) -> None:
+        with self.assertRaisesRegex(ValueError, "max wait must be greater than or equal to min wait"):
+            tenacity.wait_exponential_jitter(max=1, min=2)
+
+    def test_wait_exponential_jitter_rejects_boolean_exponent_base(self) -> None:
+        with self.assertRaisesRegex(TypeError, "exp_base must be a real number"):
+            tenacity.wait_exponential_jitter(exp_base=True)
+
+    def test_wait_exponential_jitter_rejects_non_finite_parameters(self) -> None:
+        for kwargs in (
+            {"max": float("nan")},
+            {"jitter": float("inf")},
+            {"min": float("nan")},
+            {"exp_base": float("inf")},
+            {"multiplier": float("nan")},
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, "finite"):
+                    tenacity.wait_exponential_jitter(**kwargs)
+
+    def test_wait_exponential_jitter_rejects_negative_parameters(self) -> None:
+        for kwargs, message in (
+            ({"multiplier": -1}, "multiplier"),
+            ({"exp_base": -1}, "exp_base"),
+            ({"jitter": -1}, "jitter"),
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    tenacity.wait_exponential_jitter(**kwargs)
 
     def test_wait_retry_state_attributes(self) -> None:
         class ExtractCallState(Exception):
