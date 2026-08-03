@@ -338,6 +338,8 @@ class wait_exponential_jitter(wait_base):
             raise ValueError("multiplier must be greater than or equal to zero")
         if self.exp_base <= 0:
             raise ValueError("exp_base must be greater than zero")
+        if self.exp_base == 1:
+            raise ValueError("exp_base must not equal one")
         if self.jitter < 0:
             raise ValueError("jitter must be greater than or equal to zero")
         if self.min < 0:

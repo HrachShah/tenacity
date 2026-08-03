@@ -502,6 +502,10 @@ class TestWaitConditions(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     tenacity.wait_exponential_jitter(**kwargs)
 
+    def test_exponential_jitter_rejects_unit_exponent_base(self) -> None:
+        with self.assertRaisesRegex(ValueError, "exp_base must not equal one"):
+            tenacity.wait_exponential_jitter(exp_base=1)
+
     def test_legacy_explicit_wait_type(self) -> None:
         Retrying(wait="exponential_sleep")  # type: ignore[arg-type]
 
