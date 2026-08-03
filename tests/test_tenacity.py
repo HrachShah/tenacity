@@ -789,6 +789,10 @@ class TestWaitConditions(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, "exp_base must be a real number"):
             tenacity.wait_exponential_jitter(exp_base=True)
 
+    def test_wait_exponential_jitter_rejects_boolean_multiplier(self) -> None:
+        with self.assertRaisesRegex(TypeError, "multiplier must be a real number"):
+            tenacity.wait_exponential_jitter(multiplier=True)
+
     def test_wait_exponential_jitter_rejects_non_finite_parameters(self) -> None:
         for kwargs in (
             {"max": float("nan")},

@@ -318,6 +318,8 @@ class wait_exponential_jitter(wait_base):
             )
             multiplier = initial
 
+        if isinstance(multiplier, bool):
+            raise TypeError("multiplier must be a real number")
         self.multiplier = multiplier
         self.max = _utils.to_seconds(max)
         self.exp_base = exp_base
