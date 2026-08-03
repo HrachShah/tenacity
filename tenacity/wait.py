@@ -323,6 +323,10 @@ class wait_exponential_jitter(wait_base):
         self.exp_base = exp_base
         self.jitter = _utils.to_seconds(jitter)
         self.min = _utils.to_seconds(min)
+        if isinstance(multiplier, bool):
+            raise TypeError("multiplier must be a real number")
+        if isinstance(jitter, bool):
+            raise TypeError("jitter must be a real number")
         if isinstance(self.exp_base, bool):
             raise TypeError("exp_base must be a real number")
         if not all(
