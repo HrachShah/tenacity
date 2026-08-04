@@ -1,5 +1,7 @@
 import functools
 
+import pytest
+
 from tenacity import _utils
 
 
@@ -39,6 +41,11 @@ def test_is_coroutine_callable() -> None:
     assert _utils.is_coroutine_callable(partial_async_class) is True
     assert _utils.is_coroutine_callable(partial_sync_class) is False
     assert _utils.is_coroutine_callable(partial_lambda_fn) is False
+
+
+def test_to_seconds_rejects_values_that_overflow_float() -> None:
+    with pytest.raises(ValueError, match="fit in a floating-point number"):
+        _utils.to_seconds(10**1000)
 
 
 def test_find_ordinal() -> None:

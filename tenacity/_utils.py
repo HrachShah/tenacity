@@ -84,9 +84,12 @@ time_unit_type = int | float | timedelta
 def to_seconds(time_unit: time_unit_type) -> float:
     if isinstance(time_unit, bool):
         raise TypeError("time values must be real numbers or timedeltas")
-    return float(
-        time_unit.total_seconds() if isinstance(time_unit, timedelta) else time_unit
-    )
+    try:
+        return float(
+            time_unit.total_seconds() if isinstance(time_unit, timedelta) else time_unit
+        )
+    except OverflowError as exc:
+        raise ValueError("time values must fit in a floating-point number") from exc
 
 
 def is_coroutine_callable(call: typing.Callable[..., typing.Any]) -> bool:
