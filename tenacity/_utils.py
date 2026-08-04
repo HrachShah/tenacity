@@ -16,7 +16,6 @@
 import contextlib
 import functools
 import inspect
-import math
 import sys
 import typing
 from datetime import timedelta
@@ -91,9 +90,6 @@ def to_seconds(time_unit: time_unit_type) -> float:
         )
     except OverflowError as exc:
         raise ValueError("time values must fit in a floating-point number") from exc
-    return seconds
-    return seconds
-    return seconds
     return seconds
 
 
