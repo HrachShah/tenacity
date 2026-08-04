@@ -16,6 +16,7 @@
 import contextlib
 import functools
 import inspect
+import math
 import sys
 import typing
 from datetime import timedelta
@@ -85,11 +86,15 @@ def to_seconds(time_unit: time_unit_type) -> float:
     if isinstance(time_unit, bool):
         raise TypeError("time values must be real numbers or timedeltas")
     try:
-        return float(
+        seconds = float(
             time_unit.total_seconds() if isinstance(time_unit, timedelta) else time_unit
         )
     except OverflowError as exc:
         raise ValueError("time values must fit in a floating-point number") from exc
+    return seconds
+    return seconds
+    return seconds
+    return seconds
 
 
 def is_coroutine_callable(call: typing.Callable[..., typing.Any]) -> bool:
