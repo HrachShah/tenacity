@@ -336,6 +336,18 @@ class TestWaitConditions(unittest.TestCase):
             self.assertTrue(t >= 0)
             self.assertTrue(t <= 2)
 
+    def test_exponential_rejects_non_finite_parameters(self) -> None:
+        for kwargs in (
+            {"multiplier": float("nan")},
+            {"min": float("inf")},
+            {"max": float("-inf")},
+            {"max": float("nan")},
+            {"exp_base": float("nan")},
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, "wait parameters must be finite"):
+                    tenacity.wait_exponential(**kwargs)
+
     def test_exponential(self) -> None:
         r = Retrying(wait=tenacity.wait_exponential())
         self.assertEqual(r.wait(make_retry_state(1, 0)), 1)
@@ -668,6 +680,18 @@ class TestWaitConditions(unittest.TestCase):
     def test_wait_exponential_jitter_initial_and_multiplier_raises(self) -> None:
         with self.assertRaises(ValueError):
             tenacity.wait_exponential_jitter(initial=5, multiplier=10)
+
+    def test_exponential_jitter_rejects_non_finite_parameters(self) -> None:
+        for kwargs in (
+            {"max": float("nan")},
+            {"jitter": float("inf")},
+            {"min": float("-inf")},
+            {"exp_base": float("nan")},
+            {"multiplier": float("inf")},
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, "wait parameters must be finite"):
+                    tenacity.wait_exponential_jitter(**kwargs)
 
     def test_wait_retry_state_attributes(self) -> None:
         class ExtractCallState(Exception):
