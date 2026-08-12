@@ -561,6 +561,11 @@ class TestWaitConditions(unittest.TestCase):
         self.assertEqual(sleep_intervals, [1.0, 2.0, 3.0, 3.0])
         sleep_intervals[:] = []
 
+    def test_retry_action_rejects_non_finite_sleep(self) -> None:
+        for value in (float("nan"), float("inf"), float("-inf")):
+            with self.assertRaises(ValueError):
+                tenacity.RetryAction(value)
+
     def test_wait_chain_requires_at_least_one_strategy(self) -> None:
         with self.assertRaises(ValueError):
             tenacity.wait_chain()

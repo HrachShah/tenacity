@@ -17,6 +17,7 @@
 # limitations under the License.
 import dataclasses
 import functools
+import math
 import sys
 import threading
 import time
@@ -166,7 +167,10 @@ class RetryAction(BaseAction):
     NAME = "retry"
 
     def __init__(self, sleep: t.SupportsFloat) -> None:
-        self.sleep = float(sleep)
+        value = float(sleep)
+        if not math.isfinite(value):
+            raise ValueError("sleep must be finite")
+        self.sleep = value
 
 
 _unset = object()
